@@ -61,44 +61,7 @@ export const AuthService = {
     }
   },
 
-  // Forgot password
-  async forgotPassword(email: string) {
-    try {
-      const response = await fetch(`${API_URL}/forgot-password`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email }),
-      });
-      
-      return await response.json();
-    } catch (error) {
-      console.error('Forgot password error:', error);
-      throw error;
-    }
-  },
 
-  // Reset password
-  async resetPassword(token: string, newPassword: string) {
-    try {
-      const response = await fetch(`${API_URL}/reset-password`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          token,
-          new_password: newPassword,
-        }),
-      });
-      
-      return await response.json();
-    } catch (error) {
-      console.error('Reset password error:', error);
-      throw error;
-    }
-  },
 
   // Get user profile
   async getProfile() {
