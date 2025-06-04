@@ -16,19 +16,26 @@ export default function Login() {
     e.preventDefault();
     setError("");
     setLoading(true);
+    console.log('Starting login process...');
 
     try {
+      console.log('Calling AuthService.login...');
       const { data, status } = await AuthService.login(email, password);
+      console.log('Login response:', { status, data });
       
       if (status === 200) {
+        console.log('Login successful, redirecting to dashboard...');
         // Redirect to dashboard or home page on successful login
         router.push("/dashboard");
       } else {
-        setError(data.detail || "Failed to login. Please check your credentials.");
+        const message = data?.detail || "Failed to login. Please check your credentials.";
+        console.error('Login failed:', message);
+        setError(message);
       }
-    } catch (err) {
-      setError("An error occurred during login. Please try again.");
-      console.error("Login error:", err);
+    } catch (err: any) {
+      const errorMessage = err?.message || "An error occurred during login. Please try again.";
+      console.error("Login error:", errorMessage, err);
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
