@@ -15,6 +15,7 @@ interface AuthContextType {
   loading: boolean;
   error: string | null;
   login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
+  register: (email: string, password: string, fullName: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   isLoggedIn: boolean;
 }
@@ -27,6 +28,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [error, setError] = useState<string | null>(null);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const router = useRouter();
+
+  const register = async (email: string, password: string, fullName: string) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      await AuthService.register(email, password, fullName);
+      // After successful registration, log the user in
+      const loginResult = await login(email, password);
+      return loginResult;
+    } catch (err: any) {
+      const errorMsg = err.message || 'Registration failed';
+      setError(errorMsg);
+      return { success: false, error: errorMsg };
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const login = async (email: string, password: string) => {
     setLoading(true);
@@ -58,7 +77,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, error, login, logout, isLoggedIn }}>
+    <AuthContext.Provider 
+      value={{ 
+        user, 
+        loading, 
+        error, 
+        login, 
+        register,
+        logout, 
+        isLoggedIn 
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

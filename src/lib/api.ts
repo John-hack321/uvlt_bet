@@ -3,6 +3,33 @@ const API_URL = 'https://uvltback-production.up.railway.app';
 
 // Simple API service
 export const AuthService = {
+  // Register a new user
+  async register(email: string, password: string, fullName: string) {
+    try {
+      const response = await fetch(`${API_URL}/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email,
+          password,
+          full_name: fullName,
+        }),
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.detail || 'Registration failed');
+      }
+      
+      return data;
+    } catch (error) {
+      console.error('Registration error:', error);
+      throw error;
+    }
+  },
   // Login user
   async login(email: string, password: string) {
     try {
