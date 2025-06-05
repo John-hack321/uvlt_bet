@@ -46,7 +46,7 @@ export const AuthService = {
           'Content-Type': 'application/x-www-form-urlencoded',
           'Accept': 'application/json',
         },
-        credentials: 'include',
+        // Removed credentials: 'include' as we're using JWT in Authorization header
         body: formData,
       });
       
