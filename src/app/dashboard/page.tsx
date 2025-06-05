@@ -6,26 +6,16 @@ import { useAuth } from "../../context/AuthContext";
 import Link from "next/link";
 
 export default function Dashboard() {
-  const { user, isLoggedIn, logout, loading } = useAuth();
   const router = useRouter();
-  const [isClient, setIsClient] = useState(false);
+  const { user, isLoggedIn, logout, loading } = useAuth();
 
   useEffect(() => {
-    setIsClient(true);
-    
-    // If not logged in and not loading, redirect to login page
     if (!loading && !isLoggedIn) {
-      router.push("/auth/login");
+      router.push('/auth/login');
     }
-  }, [isLoggedIn, loading, router]);
+  }, [loading, isLoggedIn, router]);
 
-  // Only render the dashboard content on the client side
-  if (!isClient) {
-    return null;
-  }
-
-  // Show loading state while checking authentication
-  if (loading) {
+  if (loading || !isLoggedIn) {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
@@ -36,13 +26,8 @@ export default function Dashboard() {
     );
   }
 
-  // If not logged in, don't render anything (will be redirected)
-  if (!isLoggedIn) {
-    return null;
-  }
-
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-100">
       <nav className="bg-white shadow">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
