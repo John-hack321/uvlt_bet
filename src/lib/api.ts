@@ -46,28 +46,43 @@ export const AuthService = {
           'Content-Type': 'application/x-www-form-urlencoded',
           'Accept': 'application/json',
         },
-        // Removed credentials: 'include' as we're using JWT in Authorization header
         body: formData,
       });
       
       console.log('Login response status:', response.status);
       
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('Login error response:', errorData);
+        const errorText = await response.text();
+        console.error('Login error response:', errorText);
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch (e) {
+          errorData = { detail: errorText };
+        }
         throw new Error(errorData.detail || 'Login failed');
       }
       
       const data = await response.json();
-      console.log('Login successful, token received');
+      console.log('Login successful, token received:', data);
       
-      // Store the access token in localStorage
-      if (data.access_token) {
-        localStorage.setItem('access_token', data.access_token);
-        console.log('Access token stored in localStorage');
+      if (!data.access_token) {
+        throw new Error('No access token in response');
       }
       
-      return { data, status: response.status };
+      // Store the access token in localStorage
+      localStorage.setItem('access_token', data.access_token);
+      console.log('Access token stored in localStorage');
+      
+      return { 
+        data: {
+          ...data,
+          // Make sure we have the expected fields
+          access_token: data.access_token,
+          token_type: data.token_type || 'bearer'
+        }, 
+        status: response.status 
+      };
     } catch (error) {
       console.error('Login error:', error);
       throw error;
@@ -80,6 +95,10 @@ export const AuthService = {
     const token = localStorage.getItem('access_token');
     console.log('Current token:', token ? 'exists' : 'missing');
     
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
     try {
       const response = await fetch(`${API_URL}/users/me`, {
         method: 'GET',
@@ -87,20 +106,25 @@ export const AuthService = {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
           'Accept': 'application/json',
-        },
-        credentials: 'include',
+        }
       });
       
       console.log('Profile response status:', response.status);
       
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('Profile fetch failed:', errorData);
+        const errorText = await response.text();
+        console.error('Profile fetch failed with status:', response.status, errorText);
+        let errorData;
+        try {
+          errorData = JSON.parse(errorText);
+        } catch (e) {
+          errorData = { detail: errorText };
+        }
         throw new Error(errorData.detail || 'Failed to fetch profile');
       }
       
       const data = await response.json();
-      console.log('Profile data:', data);
+      console.log('Profile data received:', data);
       return data;
     } catch (error) {
       console.error('Error in getProfile:', error);
