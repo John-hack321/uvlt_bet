@@ -65,19 +65,36 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setError(null);
     
     try {
+      console.log('Attempting to login...');
       const { data, status } = await AuthService.login(email, password);
+      console.log('Login response:', { status, data });
       
       if (status === 200) {
-        const userData = await AuthService.getProfile();
-        setUser(userData);
-        setIsLoggedIn(true);
-        router.push("/dashboard"); // Redirect to dashboard after login
+        console.log('Login successful, fetching profile...');
+        // Small delay to ensure token is set
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        try {
+          const userData = await AuthService.getProfile();
+          console.log('User profile:', userData);
+          setUser(userData);
+          setIsLoggedIn(true);
+          console.log('Redirecting to dashboard...');
+          router.push("/dashboard");
+          router.refresh(); // Force a refresh to update the UI
+        } catch (profileErr) {
+          console.error('Error fetching profile:', profileErr);
+          setError('Logged in but failed to load profile');
+        }
       } else {
-        setError(data.detail || "Failed to login. Please check your credentials.");
+        const errorMsg = data?.detail || "Failed to login. Please check your credentials.";
+        console.error('Login failed:', errorMsg);
+        setError(errorMsg);
       }
     } catch (err: any) {
-      setError(err.message || "An error occurred during login.");
-      console.error("Login error:", err);
+      const errorMsg = err.message || "An error occurred during login.";
+      console.error("Login error:", errorMsg, err);
+      setError(errorMsg);
     } finally {
       setLoading(false);
     }
