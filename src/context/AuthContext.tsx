@@ -16,7 +16,7 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   error: string | null;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   register: (email: string, password: string, fullName: string) => Promise<void>;
   logout: () => void;
   isLoggedIn: boolean;
@@ -36,21 +36,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Check if the user is logged in when the component mounts
   useEffect(() => {
     async function checkAuthStatus() {
+      setLoading(true);
       try {
         // Check if there's a token in localStorage
         if (!AuthService.isLoggedIn()) {
+          console.log('No auth token found');
           setLoading(false);
           return;
         }
 
+        console.log('Auth token found, fetching profile...');
         // Fetch user profile
         const userData = await AuthService.getProfile();
+        console.log('Profile fetched successfully:', userData);
+        
         setUser(userData);
         setIsLoggedIn(true);
       } catch (err) {
         console.error("Authentication check failed:", err);
         // Clear token if it's invalid
         AuthService.logout();
+        setUser(null);
+        setIsLoggedIn(false);
       } finally {
         setLoading(false);
       }
@@ -71,30 +78,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       
       if (status === 200) {
         console.log('Login successful, fetching profile...');
-        // Small delay to ensure token is set
-        await new Promise(resolve => setTimeout(resolve, 100));
         
-        try {
-          const userData = await AuthService.getProfile();
-          console.log('User profile:', userData);
-          setUser(userData);
-          setIsLoggedIn(true);
-          console.log('Redirecting to dashboard...');
-          router.push("/dashboard");
-          router.refresh(); // Force a refresh to update the UI
-        } catch (profileErr) {
-          console.error('Error fetching profile:', profileErr);
-          setError('Logged in but failed to load profile');
-        }
+        // Get the profile using the token
+        const userData = await AuthService.getProfile();
+        console.log('User profile:', userData);
+        
+        // Update auth state
+        setUser(userData);
+        setIsLoggedIn(true);
+        
+        console.log('Login flow completed, redirecting to dashboard...');
+        router.push("/dashboard");
+        router.refresh(); // Ensure UI updates
+        
+        return { success: true };
       } else {
         const errorMsg = data?.detail || "Failed to login. Please check your credentials.";
         console.error('Login failed:', errorMsg);
         setError(errorMsg);
+        return { success: false, error: errorMsg };
       }
     } catch (err: any) {
       const errorMsg = err.message || "An error occurred during login.";
       console.error("Login error:", errorMsg, err);
       setError(errorMsg);
+      return { success: false, error: errorMsg };
     } finally {
       setLoading(false);
     }

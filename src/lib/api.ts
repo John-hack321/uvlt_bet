@@ -76,18 +76,34 @@ export const AuthService = {
 
   // Get user profile
   async getProfile() {
+    console.log('Fetching user profile...');
+    const token = localStorage.getItem('access_token');
+    console.log('Current token:', token ? 'exists' : 'missing');
+    
     try {
       const response = await fetch(`${API_URL}/users/me`, {
-        headers: this.getAuthHeaders()
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        credentials: 'include',
       });
       
+      console.log('Profile response status:', response.status);
+      
       if (!response.ok) {
-        throw new Error('Failed to fetch profile');
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Profile fetch failed:', errorData);
+        throw new Error(errorData.detail || 'Failed to fetch profile');
       }
       
-      return await response.json();
+      const data = await response.json();
+      console.log('Profile data:', data);
+      return data;
     } catch (error) {
-      console.error('Error fetching profile:', error);
+      console.error('Error in getProfile:', error);
       // Clear invalid token on error
       localStorage.removeItem('access_token');
       throw error;
